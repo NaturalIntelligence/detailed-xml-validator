@@ -1,0 +1,13 @@
+<students>
+    <student>
+        <firstname>Dinkar</firstname>
+        <lastname>Kad</lastname>
+        <nickname>Dinkar</nickname>
+        <marks>
+            <subject>
+                <name></name>
+                <score></score>
+            </subject>
+        </marks>
+    </student>
+</students>

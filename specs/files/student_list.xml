@@ -1,0 +1,18 @@
+<students>
+    <student>
+        <firstname>Dinkar</firstname>
+        <lastname>Kad</lastname>
+        <nickname>Dinkar</nickname>
+        <contact>
+            <phone>123456891</phone>
+        </contact>
+    </student>
+    <student>
+        <firstname>Rahul</firstname>
+        <lastname>Sharma</lastname>
+        <nickname>Raj</nickname>
+        <contact>
+            <phone>123456892</phone>
+        </contact>
+    </student>
+</students>

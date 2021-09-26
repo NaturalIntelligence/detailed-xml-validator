@@ -1,0 +1,12 @@
+<?xml version = "1.0"?>
+
+<students nill="false">
+    <student minOccurs="1">
+        <firstname minLength="3" maxLength="10" nill="false"></firstname>
+        <lastname minLength="3" maxLength="10" nill="false"></lastname>
+        <nickname minLength="3" maxLength="10"></nickname>
+        <contact>
+            <phone length="10"></phone>
+        </contact>
+    </student>
+</students>
