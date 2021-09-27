@@ -34,11 +34,11 @@ describe("XML validator with custom message", function() {
                 <a></a> <!-- nillable="true" -->
                 <b></b> <!-- nillable="true" -->
                 <c nillable="true"></c>
-                <d type="list" nillable="false"></d>
-                <e type="list" nillable="false"></e>
+                <d repeatable nillable="false"></d>
+                <e repeatable nillable="false"></e>
                 <f type="map" nillable="false"></f>
                 <g type="map" nillable="false"></g>
-                <x type="list" minOccurs="0"></x>
+                <x repeatable minOccurs="0"></x>
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
@@ -58,12 +58,12 @@ describe("XML validator with custom message", function() {
                 <a></a> <!-- nillable="true" -->
                 <b></b> <!-- nillable="true" -->
                 <c nillable="true"></c>
-                <d type="list" nillable="false"></d>
+                <d repeatable nillable="false"></d>
                 <f type="map" nillable="false"></f>
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
-        console.log(actual);
+        // console.log(actual);
         expect(actual).to.deep.equal([ 
             { code: 'missing', path: 'root.d'} ,
             { code: 'missing', path: 'root.f'} ,
@@ -84,7 +84,7 @@ describe("XML validator with custom message", function() {
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
-        console.log(actual);
+        // console.log(actual);
         expect(actual).to.deep.equal([ 
             { code: 'missing', path: 'root.e'} ,
         ]);
@@ -105,7 +105,7 @@ describe("XML validator with custom message", function() {
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
-        console.log(actual);
+        // console.log(actual);
         expect(actual).to.deep.equal([ 
             { code: 'missing', path: 'root.e'} ,
         ]);
@@ -120,13 +120,13 @@ describe("XML validator with custom message", function() {
                 <a></a> <!-- nillable="true" -->
                 <b></b> <!-- nillable="true" -->
                 <c nillable="true"></c>
-                <d type="list" nillable="false"></d>
+                <d repeatable nillable="false"></d>
                 <f type="map" nillable="false"></f>
-                <g type="list" minOccurs="1"></g>
+                <g repeatable minOccurs="1"></g>
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
-        console.log(actual);
+        // console.log(actual);
         expect(actual).to.deep.equal([ 
             { code: 'missing', path: 'root.d'} ,
             { code: 'missing', path: 'root.f'} ,
@@ -175,29 +175,28 @@ describe("XML validator with array", function() {
         const xmlData = `
             <root>
                 <a></a>
-                <a></a>
             </root>`;
         const rules = `
             <root>
                 <a></a>
-                <b type="list"></b>
+                <b repeatable></b>
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
         // console.log(actual);
-        expect(actual).to.deep.equal([ ]);
+        expect(actual).to.deep.equal([
+         ]);
     });
 
     it("when missing mandatory list", function(){
         const xmlData = `
             <root>
                 <a></a>
-                <a></a>
             </root>`;
         const rules = `
             <root>
                 <a></a>
-                <b type="list" nillable="false"></b>
+                <b repeatable nillable="false"></b>
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
@@ -207,26 +206,43 @@ describe("XML validator with array", function() {
          ]);
     });
 
-    it("when list with minOccurs and maxOccurs", function(){
+    it("when missing mandatory list based on minOccurs", function(){
         const xmlData = `
             <root>
-                <a></a>
                 <a></a>
             </root>`;
         const rules = `
             <root>
                 <a></a>
-                <b type="list" nillable="false"></b>
-                <b type="list" minOccurs="0"></b>
-                <c type="list" minOccurs="0" maxOccurs="0"></c>
-                <d type="list" minOccurs="2" maxOccurs="1"></d>
-                <e type="list" minOccurs="1" maxOccurs="1"></e>
-                <f type="list" minOccurs="1" maxOccurs="2"></f>
-                <g type="list" maxOccurs="0"></g>
+                <b repeatable minOccurs="1"></b>
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
-        //console.log(actual);
+        // console.log(actual);
+        expect(actual).to.deep.equal([
+            { code: 'missing', path: 'root.b'} ,
+         ]);
+    });
+
+    it("when all list missing with minOccurs and maxOccurs", function(){
+        const xmlData = `
+            <root>
+                <a></a>
+            </root>`;
+        const rules = `
+            <root>
+                <a></a>
+                <b repeatable nillable="false"></b>
+                <b repeatable minOccurs="0"></b>
+                <c repeatable minOccurs="0" maxOccurs="0"></c>
+                <d repeatable minOccurs="2" maxOccurs="1"></d>
+                <e repeatable minOccurs="1" maxOccurs="1"></e>
+                <f repeatable minOccurs="1" maxOccurs="2"></f>
+                <g repeatable maxOccurs="0"></g>
+            </root>`;
+        const validator = new Validator(rules);
+        const actual = validator.validate(xmlData);
+        // console.log(actual);
         expect(actual).to.deep.equal([
             { code: 'missing', path: 'root.d'} ,
             { code: 'missing', path: 'root.e'} ,
@@ -234,11 +250,29 @@ describe("XML validator with array", function() {
         ]);
     });
 
-    it("when list with minOccurs and maxOccurs", function(){
+    it("when non repeatable items are repeated", function(){
         const xmlData = `
             <root>
                 <a></a>
                 <a></a>
+                <d></d>
+            </root>`;
+        const rules = `
+            <root>
+                <a></a>
+                <d></d>
+            </root>`;
+        const validator = new Validator(rules);
+        const actual = validator.validate(xmlData);
+        // console.log(actual);
+        expect(actual).to.deep.equal([
+            { code: 'unexpected sequence', path: 'root.a' }
+        ]);
+    });
+
+    it("when list with minOccurs and maxOccurs", function(){
+        const xmlData = `
+            <root>
                 <b></b>
                 <c></c>
                 <d></d>
@@ -246,12 +280,12 @@ describe("XML validator with array", function() {
         const rules = `
             <root>
                 <a></a>
-                <b type="list" minOccurs="0"></b>
-                <c type="list" minOccurs="0" maxOccurs="0"></c>
-                <d type="list" minOccurs="2" maxOccurs="1"></d>
-                <e type="list" minOccurs="1" maxOccurs="1"></e>
-                <f type="list" minOccurs="1" maxOccurs="2"></f>
-                <g type="list" maxOccurs="0"></g>
+                <b repeatable minOccurs="0"></b>
+                <c repeatable minOccurs="0" maxOccurs="0"></c>
+                <d repeatable minOccurs="2" maxOccurs="1"></d>
+                <e repeatable minOccurs="1" maxOccurs="1"></e>
+                <f repeatable minOccurs="1" maxOccurs="2"></f>
+                <g repeatable maxOccurs="0"></g>
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
@@ -259,20 +293,19 @@ describe("XML validator with array", function() {
         expect(actual).to.deep.equal([
             { code: 'missing', path: 'root.e' },
             { code: 'missing', path: 'root.f' },
-            { code: 'minOccurs', path: 'root.b', actual: 1, expected: "0" },
-            { code: 'minOccurs', path: 'root.c', actual: 1, expected: "0" },
-            { code: 'maxOccurs', path: 'root.c', actual: 1, expected: "0" },
-            { code: 'minOccurs', path: 'root.d', actual: 1, expected: "2" },
-            { code: 'maxOccurs', path: 'root.d', actual: 1, expected: "1" }
+            { code: 'maxOccurs', path: 'root.c', actual: 1, expected: 0 },
+            { code: 'minOccurs', path: 'root.d', actual: 1, expected: 2 },
+            { code: 'maxOccurs', path: 'root.d', actual: 1, expected: 1 }
         ]);
     });
 
-    it.skip("when list with minOccurs and maxOccurs", function(){
+    it("when list with minOccurs and maxOccurs and nested object", function(){
         const xmlData = `
             <root>
                 <a></a>
-                <a></a>
+                <b></b>
                 <b>
+                    <e></e>
                 </b>
                 <b>
                     <nested></nested>
@@ -282,19 +315,25 @@ describe("XML validator with array", function() {
         const rules = `
             <root>
                 <a></a>
-                <b type="list" minOccurs="1">
-                    <nested nill="false"></nested>
+                <b repeatable minOccurs="1" maxOccurs="2">
+                    <nested nillable="false"></nested>
                 </b>
             </root>`;
-        const validator = new Validator(rules);
+        const validator = new Validator(rules, {
+            unknownAllow: false
+        });
         const actual = validator.validate(xmlData);
-        console.log(actual);
+        // console.log(actual);
         expect(actual).to.deep.equal([
-            { code: 'minOccurs', path: 'root.b', actual: 1, expected: "0" },
-            { code: 'minOccurs', path: 'root.b', actual: 1, expected: "0" },
+            { code: 'unknown', path: 'root.d' },
+            { code: 'maxOccurs', path: 'root.b', actual: 3, expected: 2 },
+            { code: 'missing', path: 'root.b[0].nested' },
+            { code: 'unknown', path: 'root.b[1].e' },
+            { code: 'missing', path: 'root.b[1].nested' }
         ]);
     });
-    it.only("when list is mentioned as map", function(){
+
+    it("when list is mentioned as map", function(){
         const xmlData = `
             <root>
                 <a></a>
@@ -306,13 +345,14 @@ describe("XML validator with array", function() {
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
-        console.log(actual);
+        // console.log(actual);
         expect(actual).to.deep.equal([
-            { code: 'not a map' },
+            { code: 'unexpected sequence', path: 'root.a' }
+            //{ code: 'not a map' },
         ]);
     });
 
-    it.only("when list of particular type", function(){
+    it("when list of particular type", function(){
         const xmlData = `
             <root>
                 <a>amit</a>
@@ -320,13 +360,12 @@ describe("XML validator with array", function() {
             </root>`;
         const rules = `
             <root>
-                <a type="string"></a>
+                <a repeatable type="string"></a>
             </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
-        console.log(actual);
+        // console.log(actual);
         expect(actual).to.deep.equal([
-            { code: 'not a map' },
         ]);
     });
 
@@ -349,7 +388,7 @@ describe("XML validator with Number", function() {
         const xmlData = fs.readFileSync( path.join( __dirname, "./files/student_obj.xml") ).toString();
         const rules = fs.readFileSync( path.join( __dirname, "./files/student_rules.xml")).toString();
         const validator = new Validator(rules);
-        console.log(validator.validate(xmlData));
+        //console.log(validator.validate(xmlData));
     });
     
 });

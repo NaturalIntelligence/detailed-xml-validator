@@ -28,7 +28,7 @@ describe("XML validator should throw error when ", function() {
         assert.throws(() => {
             const validator = new Validator(studentRulesStr);
             validator.validate(errData);
-        }, "boolean attribute '<name' is not allowed.:9");
+        }, "Attribute '<name' is an invalid name.:9");
     });
     it("No rules", async function(){
         assert.throws(() => {
@@ -43,6 +43,6 @@ describe("XML validator should throw error when ", function() {
     it("Syntax error in rules XML data", async function(){
         assert.throws(() => {
             new Validator(errData);
-        }, "boolean attribute '<name' is not allowed.:9");
+        }, "Attribute '<name' is an invalid name.:9");
     });
 });
