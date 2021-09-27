@@ -25,8 +25,8 @@ class Validator{
     validate(xmldata){
         validateXMlData(xmldata);
         const xmlObj = parser.parse(xmldata, {
-            ignoreAttributes: false
-            
+            ignoreAttributes: false,
+            parseNodeValue: false
         });
         this.traverse (xmlObj, "", this.rules, "");
         return this.failures;
@@ -47,7 +47,11 @@ class Validator{
                     this.checkOccurences(rules['@'], ele.length, path);
                     ele.forEach( (val,index) => {
                         const arrayPath = path + "[" + index + "]";
-                        this.callForCommonProperties(ele[index], rules, arrayPath);
+                        if(Object.keys(rules).length > 1){
+                            this.callForCommonProperties(ele[index], rules, arrayPath);
+                        }else{
+                            this.traverse(ele[index], key, rules, arrayPath);
+                        }
                     });
                     return;
                 }
@@ -69,16 +73,16 @@ class Validator{
 
     callForCommonProperties(ele, rules, path){
         const tags = Object.keys(ele);
-            const rulesTags = Object.keys(rules);
+        const rulesTags = Object.keys(rules);
 
-            const sets = breakInSets(tags, rulesTags);
-            this.checkUnknownSiblings(sets, path);
-            this.checkMissingSiblings(sets, rules, path);
+        const sets = breakInSets(tags, rulesTags);
+        this.checkUnknownSiblings(sets, path);
+        this.checkMissingSiblings(sets, rules, path);
 
-            sets.common.forEach(key => {
-                const newpath = path + "." + key;
-                this.traverse(ele[key], key, rules[key], newpath);
-            });
+        sets.common.forEach(key => {
+            const newpath = path + "." + key;
+            this.traverse(ele[key], key, rules[key], newpath);
+        });
     }
 
     /**
@@ -95,28 +99,35 @@ class Validator{
     checkDataAndType(val, key, rules, path){
         if(rules['@'].repeatable === true){ //leaf node 
             this.checkOccurences(rules['@'], 1, path);
-        }else {
-            const eleType = rules['@'].type;
-            //leaf node can be map if all child elements are optional
-            if (eleType === "map" ||
-                (!eleType && this.isMapType(rules))) {
-                //leaf node can be a map only if it's all child tags are optional
-                this.validateMandatoryFields(rules, path);
-            } else if (eleType === "date") {
-                this.validateDate(val, eleType, path);
-            } else if (eleType === "boolean") {
-                this.validateBoolean(eleType, path, val);
-            } else if (numericTypes.indexOf(eleType) !== -1) {
-                if (!this.isValidNum(eleType, val)) {
-                    this.setInvalidDataType(eleType, path, val);
-                } else {
-                    this.assertValue(rules, "num", val, path);
-                }
-            } else if (eleType === "string" || !eleType) {
-                this.assertValue(rules, "string", val, path);
-            } else {
-                throw new Error("Unsupported data type in Rules:" + eleType);
+        }
+        const eleType = rules['@'].type;
+        //leaf node can be map if all child elements are optional
+        if (eleType === "map" ||
+            (!eleType && this.isMapType(rules))) {
+            //leaf node can be a map only if it's all child tags are optional
+            if(typeof val === 'string' && val.length > 0) {
+                this.failures.push({
+                    code: "unexpected value in a map",
+                    path: path.substr(1),
+                    value: val
+                })
             }
+            this.validateMandatoryFields(rules, path);
+
+        } else if (eleType === "date") {
+            this.validateDate(val, eleType, path);
+        } else if (eleType === "boolean") {
+            this.validateBoolean(val, eleType, path);
+        } else if (numericTypes.indexOf(eleType) !== -1) {
+            if (!this.isValidNum(eleType, val)) {
+                this.setInvalidDataType(eleType, path, val);
+            } else {
+                this.assertValue(rules['@'], "num", Number(val), path);
+            }
+        } else if (eleType === "string" || !eleType) {
+            this.assertValue(rules['@'], "string", val, path);
+        } else {
+            throw new Error("Unsupported data type in Rules:" + eleType);
         }
     }
 
@@ -192,7 +203,7 @@ class Validator{
     checkNumeric(rules, actual, newpath){
         ["min", "max"].forEach( rule => {
             if(rules[rule] !== undefined){
-                const expected = rules[rule];
+                const expected = Number(rules[rule]);
                 if( !validations.num[rule](expected, actual) ){
                     this.setInvalidValueError(rule, newpath, actual, expected);
                 };
@@ -201,7 +212,21 @@ class Validator{
     }
 
     checkString(rules, actual, newpath){
-        ["minLength", "maxLength", "length", "pattern"].forEach( rule => {
+        ["minLength", "maxLength", "length"].forEach( rule => {
+            if(rules[rule] !== undefined){
+                const expected = Number(rules[rule]);
+                if( !validations.string[rule](expected, actual) ){
+                    this.setInvalidValueError(rule, newpath, actual, expected);
+                };
+            }
+        });
+        // if(rules.pattern){
+        //     const expected = rules[rule];
+        //         if( !validations.string[rule](expected, actual) ){
+        //             this.setInvalidValueError(rule, newpath, actual, expected);
+        //         };
+        // }
+        ["pattern"].forEach( rule => {
             if(rules[rule] !== undefined){
                 const expected = rules[rule];
                 if( !validations.string[rule](expected, actual) ){
@@ -212,20 +237,19 @@ class Validator{
     }
 
     assertValue(rules,eleType,actual, newpath){
-        //if(rules.repeatable) this.checkOccurences(rules, actual, newpath);
 
         if(eleType == "string") this.checkString(rules, actual, newpath);
         else if(eleType == "num") this.checkNumeric(rules, actual, newpath);
     }
 
-    validateBoolean(eleType,actual, newpath){
+    validateBoolean(actual, eleType,newpath){
         if(this.options.boolean.indexOf(actual) === -1){
             this.setInvalidDataType(eleType, newpath, actual);
         }
     }
 
     isValidNum(eleType, val){
-        if(isNaN(val)) {
+        if(!isNaN(val)) {
             const num = Number(val);
             if( 
             (eleType === "positiveInteger" && num < 0) ||
