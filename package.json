@@ -19,7 +19,7 @@
   "author": "Amit Gupta (https://amitkumargupta.work/)",
   "license": "MIT",
   "dependencies": {
-    "fast-xml-parser": "^3.20.0",
+    "fast-xml-parser": "^3.20.0"
   },
   "devDependencies": {
     "mocha": "^9.1.1",
