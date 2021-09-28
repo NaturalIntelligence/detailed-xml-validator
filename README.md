@@ -17,8 +17,8 @@ Sample Rules file
             <phone length="10"></phone>
         </contact>
         <gender nillable="false" ></gender>
-        <marks minOccurs="1" maxOccurs="1">
-            <subject minOccurs="5" maxOccurs="6" >
+        <marks>
+            <subject repeatable minOccurs="5" maxOccurs="6" >
                 <name pattern="math|hindi|english|science|history"></name>
                 <score type="positiveDecimal"></score>
             </subject>
