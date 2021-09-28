@@ -40,3 +40,22 @@ const validator = new Validator(rules, options);
 const failures = validator.validate(xmlStringData);
 console.log(`Found ${failures.length} issues`);
 ```
+
+Sample Response
+```js
+[
+    { code: 'missing', path: 'root.d'} ,
+    { code: 'unknown', path: 'root.f'} 
+    { code: 'minLength', path: 'root.a[0]', actual: '0', expected: 15 },
+    {
+        code: 'pattern',
+        path: 'root.a[0]',
+        actual: '0',
+        expected: '[a-z]+@gmail.com'
+    },
+    { code: 'not a boolean', path: 'root.a[0]', value: 'yes' },
+    { code: 'not a integer', path: 'root.f[2]', value: 'acbc' },
+    { code: 'max', path: 'root.d', actual: 3.2, expected: 1.5 },
+    { code: 'unexpected value in a map', path: 'root.b[1]', value: 'amit' }
+]
+```
