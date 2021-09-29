@@ -265,11 +265,8 @@ class Validator{
     }
 
     validateDate(val, eleType, newpath) {
-        try {
-            new Date(val);
-        } catch (err) {
-            this.setInvalidDataType(eleType, newpath, val);
-        }
+        const date = Date.parse(val);
+            if(isNaN(date)) this.setInvalidDataType(eleType, newpath, val);
     }
 
     setInvalidDataType(eleType, newpath, val) {

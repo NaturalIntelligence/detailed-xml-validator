@@ -176,6 +176,31 @@ describe("XML validator with Number", function() {
         ]);
     });
 
+    //type:date
+    it("when invalid date", function(){
+        const xmlData = `
+        <root>
+            <a>yes</a>
+            <a>true</a>
+            <a>21 sep 21</a>
+            <a>33:45:12</a>
+            <a>03:45:12</a>
+        </root>`;
+        const rules = `
+        <root>
+            <a repeatable type="date"></a>
+        </root>`;
+        const validator = new Validator(rules);
+        const actual = validator.validate(xmlData);
+        console.log(actual);
+        expect(actual).to.deep.equal([
+            { code: 'not a date', path: 'root.a[0]', value: 'yes' },
+            { code: 'not a date', path: 'root.a[1]', value: 'true' },
+            { code: 'not a date', path: 'root.a[3]', value: '33:45:12' },
+            { code: 'not a date', path: 'root.a[4]', value: '03:45:12' }
+        ]);
+    });
+
 
     
 });
