@@ -1,10 +1,11 @@
 {
   "name": "detailed-xml-validator",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Validate for XML schema and returns all the possible failures",
   "main": "validator.js",
   "scripts": {
-    "test": "npx nyc mocha specs/*.spec.js"
+    "test": "npx nyc mocha specs/*.spec.js",
+    "coverage": "npx nyc report --reporter html --reporter text -t .nyc_output --report-dir .nyc_output/summary"
   },
   "keywords": [
     "xsd",
