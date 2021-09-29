@@ -7,7 +7,10 @@ Sample Rules file
 <?xml version = "1.0"?>
 
 <students nillable="false">
-    <student minOccurs="1">
+    <student repeatable minOccurs="1">
+        <:a>
+            <id length="6"></id>
+        </:a>
         <firstname minLength="3" maxLength="10" nillable="false"></firstname>
         <lastname minLength="3" maxLength="10" nillable="false"></lastname>
         <nickname minLength="3" maxLength="10"></nickname>
@@ -26,6 +29,29 @@ Sample Rules file
     </student>
 </students>
 ```
+
+* **:a**: This is the special tag used to define rules for attributes
+* **nillable**: By default all the elements are nillable. Set it to `false` to mark an element mandatory. For lists, if `minOccurs` is set to `1`, it means it can't be nillable.
+* **repeatable**: A list must have this attribute
+    * **minOccurs**: To validate minimum number of elements in a list
+    * **maxOccurs**: To validate maximum number of elements in a list
+* **type**: You can define type to put the restriction on their values. Eg `positiveInteger` can't have negative values. Following types are supported
+    * **positiveInteger** : 
+    * **positiveDecimal** : 
+    * **integer** : 
+    * **decimal** : 
+    * **number** : 
+    * **date** : 
+    * **string** : default type (optional)
+    * **map** : object type (optional)
+* **Number type**: Following validations can be applied on number type
+    * **min**:
+    * **max**:
+* **String type**: Following validations can be applied on string type
+    * **minLength**:
+    * **maxLength**:
+    * **length**:
+    * **pattern**: regex
 
 Sample code 
 ```js

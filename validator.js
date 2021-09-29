@@ -15,7 +15,7 @@ class Validator{
         validateXMlData(rules);
         this.rules = parser.parse(rules, {
             ignoreAttributes: false,
-            attrNodeName: "@",
+            attrNodeName: "@rules",
             attributeNamePrefix: "",
             allowBooleanAttributes: true
         });
@@ -26,6 +26,8 @@ class Validator{
         validateXMlData(xmldata);
         const xmlObj = parser.parse(xmldata, {
             ignoreAttributes: false,
+            attrNodeName: ":a",
+            attributeNamePrefix: "",
             parseNodeValue: false
         });
         this.traverse (xmlObj, "", this.rules, "");
@@ -42,9 +44,9 @@ class Validator{
     traverse(ele, key, rules, path){
 
         if (Array.isArray(ele)) {
-            if(rules !== undefined && rules['@'] !== undefined ){
-                if(rules['@'].repeatable !== undefined ){
-                    this.checkOccurences(rules['@'], ele.length, path);
+            if(rules !== undefined && rules['@rules'] !== undefined ){
+                if(rules['@rules'].repeatable !== undefined ){
+                    this.checkOccurences(rules['@rules'], ele.length, path);
                     ele.forEach( (val,index) => {
                         const arrayPath = path + "[" + index + "]";
                         if(Object.keys(rules).length > 1){
@@ -63,7 +65,7 @@ class Validator{
         }else if (typeof ele === 'object') {
             this.callForCommonProperties(ele, rules, path);
         } else {
-            if (typeof rules === 'object' && rules['@']) {
+            if (typeof rules === 'object' && rules['@rules']) {
                 this.checkDataAndType(ele, key, rules, path);
             } else if (this.isMapType(rules)) {
                 this.validateMandatoryFields(rules, path);
@@ -97,10 +99,10 @@ class Validator{
      * @returns 
      */
     checkDataAndType(val, key, rules, path){
-        if(rules['@'].repeatable === true){ //leaf node 
-            this.checkOccurences(rules['@'], 1, path);
+        if(rules['@rules'].repeatable === true){ //leaf node 
+            this.checkOccurences(rules['@rules'], 1, path);
         }
-        const eleType = rules['@'].type;
+        const eleType = rules['@rules'].type;
         //leaf node can be map if all child elements are optional
         if (eleType === "map" ||
             (!eleType && this.isMapType(rules))) {
@@ -122,10 +124,10 @@ class Validator{
             if (!this.isValidNum(eleType, val)) {
                 this.setInvalidDataType(eleType, path, val);
             } else {
-                this.assertValue(rules['@'], "num", Number(val), path);
+                this.assertValue(rules['@rules'], "num", Number(val), path);
             }
         } else if (eleType === "string" || !eleType) {
-            this.assertValue(rules['@'], "string", val, path);
+            this.assertValue(rules['@rules'], "string", val, path);
         } else {
             throw new Error("Unsupported data type in Rules:" + eleType);
         }
@@ -134,7 +136,6 @@ class Validator{
     /**
      * Check if an object should have mandatory child tag
      * @param {object} rules 
-     * @param {string} key 
      * @param {string} newpath 
      */
     validateMandatoryFields(rules, newpath){
@@ -142,9 +143,9 @@ class Validator{
         //Check for mandatory child tags
         
         for (let i = 0; i < keys.length; i++) {
-            if(keys[i] === "@") continue;
+            if(keys[i] === "@rules") continue;
             const child = rules[keys[i]];
-            const rulesForChild = child['@'];
+            const rulesForChild = child['@rules'];
             if(rulesForChild){
                 //1. at least one child tag with minOccurs > 0
                 if(rulesForChild.minOccurs && rulesForChild.minOccurs > 0) {
@@ -171,7 +172,7 @@ class Validator{
     isMapType(tag){
         if(typeof tag === "string") return false;//leaf node without validations
         const keys = Object.keys(tag);
-        if(tag['@']){
+        if(tag['@rules']){
             if(keys.length === 1) return false; //no child tag but validations only
         }else if(keys.length === 0){//no child tag and validations
             return false;
@@ -288,7 +289,7 @@ class Validator{
     checkMissingSiblings(sets, rules, path) {
         if (sets.rules) { //rules has tags which are not in XML data
             sets.rules.forEach(tagRule => {
-                const rulesNode = rules[tagRule]["@"];
+                const rulesNode = rules[tagRule]["@rules"];
                 //if(!rulesNode || rulesNode.nillable === undefined) rulesNode.nillable = false;
                 if (rulesNode && (rulesNode.nillable === 'false' || rulesNode.minOccurs > 0 )) {
                     this.failures.push({
