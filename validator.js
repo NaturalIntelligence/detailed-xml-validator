@@ -30,6 +30,7 @@ class Validator{
             attributeNamePrefix: "",
             parseNodeValue: false
         });
+        this.data = xmlObj;
         this.traverse (xmlObj, "", this.rules, "");
         return this.failures;
     }
