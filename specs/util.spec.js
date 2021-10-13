@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const {breakInSets} = require("../util");
+const {breakInSets} = require("../src/util");
 
 describe("Utility method", function() {
     it("breakInSets should return extra items and common items", async function(){

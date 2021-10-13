@@ -1,5 +1,5 @@
 const { assert, expect } = require('chai');
-const Validator = require("../validator");
+const Validator = require("../src/validator");
 const fs = require("fs");
 const path = require("path");
 
@@ -192,7 +192,7 @@ describe("XML validator with Number", function() {
         </root>`;
         const validator = new Validator(rules);
         const actual = validator.validate(xmlData);
-        console.log(actual);
+        // console.log(actual);
         expect(actual).to.deep.equal([
             { code: 'not a date', path: 'root.a[0]', value: 'yes' },
             { code: 'not a date', path: 'root.a[1]', value: 'true' },

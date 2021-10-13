@@ -1,5 +1,5 @@
 const { assert, expect } = require('chai');
-const Validator = require("../validator");
+const Validator = require("../src/validator");
 const fs = require("fs");
 const path = require("path");
 

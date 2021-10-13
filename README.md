@@ -64,6 +64,7 @@ const options = {
 
 const validator = new Validator(rules, options);
 const failures = validator.validate(xmlStringData);
+const originalXmlJsObj = validator.data;
 console.log(`Found ${failures.length} issues`);
 ```
 

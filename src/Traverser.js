@@ -1,38 +1,14 @@
 /// @ts-check
 
-const parser = require("fast-xml-parser");
 const validations = require("./validations");
 const { breakInSets} = require("./util");
 
 const numericTypes = ["positiveInteger", "integer", "positiveDecimal", "decimal", "number"];
-const defaultOptions = {
-    unknownAllow: true,
-    boolean: ["true", "false"],
-};
-class Validator{
-    constructor(rules, options){
-        this.failures = [];
-        validateXMlData(rules);
-        this.rules = parser.parse(rules, {
-            ignoreAttributes: false,
-            attrNodeName: "@rules",
-            attributeNamePrefix: "",
-            allowBooleanAttributes: true
-        });
-        this.options = Object.assign({}, defaultOptions, options); 
-    }
 
-    validate(xmldata){
-        validateXMlData(xmldata);
-        const xmlObj = parser.parse(xmldata, {
-            ignoreAttributes: false,
-            attrNodeName: ":a",
-            attributeNamePrefix: "",
-            parseNodeValue: false
-        });
-        this.data = xmlObj;
-        this.traverse (xmlObj, "", this.rules, "");
-        return this.failures;
+class Traverser{
+    constructor(options){
+        this.options = options;
+        this.failures = [];
     }
 
     /**
@@ -42,8 +18,7 @@ class Validator{
      * @param {object|string} rules 
      * @param {string} path 
      */
-    traverse(ele, key, rules, path){
-
+     traverse(ele, key, rules, path){
         if (Array.isArray(ele)) {
             if(rules !== undefined && rules['@rules'] !== undefined ){
                 if(rules['@rules'].repeatable !== undefined ){
@@ -321,16 +296,4 @@ function isInt(value) {
     return (x | 0) === x;
 }
 
-function validateXMlData(xmldata){
-    if(!xmldata) throw new Error("Empty data")
-    else if(typeof xmldata !== "string") throw new Error("Not a valid string")
-    let xmlObj;
-    let result = parser.validate(xmldata, {
-        allowBooleanAttributes: true
-    });
-    if(result !== true){
-        throw new Error( result.err.msg + ":" + result.err.line);
-    }
-}
-module.exports = Validator;
-
+module.exports = Traverser;
