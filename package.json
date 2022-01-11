@@ -1,8 +1,8 @@
 {
   "name": "detailed-xml-validator",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Validate for XML schema and returns all the possible failures",
-  "main": "validator.js",
+  "main": "./src/validator.js",
   "scripts": {
     "test": "npx nyc mocha specs/*.spec.js",
     "coverage": "npx nyc report --reporter html --reporter text -t .nyc_output --report-dir .nyc_output/summary"
