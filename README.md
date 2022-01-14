@@ -1,7 +1,7 @@
 # detailed-xml-validator
 Validate for XML schema and returns all the possible failures
 
-This module uses it's own rule file which is different than XSD and looks more like XML data file. More features would be added in future versions. Currently, it just ensures frequency, type, range, and null validations only on top of syntax check done by FXP.
+This module uses it's own rule file which is different than XSD and looks more like XML data file. More features would be added in future versions. Currently, it just ensures frequency, type, range, value length, value pattern and null validations only on top of syntax check done by FXP.
 
 If there is no syntax error, then this module reports all failures and don't exit on first faliure. So you can report all the issues in one go.
 
