@@ -55,6 +55,9 @@ Sample Rules file
     * **maxLength**:
     * **length**:
     * **pattern**: regex
+    * **pattern_i**: regex (case insensitive)
+    * **pattern_m**: regex (multiline)
+    * **pattern_im**: regex (case insencitive and multiline)
 
 Sample code 
 ```js

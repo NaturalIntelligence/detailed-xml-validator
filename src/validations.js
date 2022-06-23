@@ -8,8 +8,8 @@ module.exports.string = {
     length : function(expected, actual){
         return actual.length === expected;
     },
-    pattern: function(expected, actual){
-        const regxp = new RegExp(expected);
+    pattern: function(expected, actual, modifier){
+        const regxp = new RegExp(expected,  modifier);
         return regxp.test(actual);
     }
 }

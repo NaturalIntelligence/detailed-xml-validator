@@ -203,10 +203,12 @@ class Traverser{
         //             this.setInvalidValueError(rule, newpath, actual, expected);
         //         };
         // }
-        ["pattern"].forEach( rule => {
+        ["pattern", "pattern_i", "pattern_im", "pattern_mi"].forEach( rule => {
             if(rules[rule] !== undefined){
+                let modifier = "";
+                if(rule.length > 8) modifier = rule.substring(8);
                 const expected = rules[rule];
-                if( !validations.string[rule](expected, actual) ){
+                if( !validations.string["pattern"](expected, actual, modifier) ){
                     this.setInvalidValueError(rule, newpath, actual, expected);
                 };
             }

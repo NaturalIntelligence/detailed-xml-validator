@@ -127,6 +127,44 @@ describe("XML validator with Number", function() {
             }
         ]);
     });
+    it("when pattern doesn't match with modifier", function(){
+        const xmlData = `
+        <root>
+            <a>0</a>
+            <a>amitguptagmail.com</a>
+            <a>amit@gmail.com</a>
+            <a>amitgupta@gmail.com</a>
+            <a>AmitGupta@Gmail.com</a>
+        </root>`;
+        const rules = `
+        <root>
+            <a repeatable pattern_i="[a-z]+@gmail.com" minLength="15"></a>
+        </root>`;
+        const validator = new Validator(rules);
+        const actual = validator.validate(xmlData);
+        // console.log(actual);
+        expect(actual).to.deep.equal([
+            { code: 'minLength', path: 'root.a[0]', actual: '0', expected: 15 },
+            {
+                code: 'pattern_i',
+                path: 'root.a[0]',
+                actual: '0',
+                expected: '[a-z]+@gmail.com'
+            },
+            {
+                code: 'pattern_i',
+                path: 'root.a[1]',
+                actual: 'amitguptagmail.com',
+                expected: '[a-z]+@gmail.com'
+            },
+            {
+                code: 'minLength',
+                path: 'root.a[2]',
+                actual: 'amit@gmail.com',
+                expected: 15
+            }
+        ]);
+    });
 
     //type:boolean
     it("when invalid boolean value", function(){
