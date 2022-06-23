@@ -146,13 +146,13 @@ describe("XML validator with Number", function() {
         expect(actual).to.deep.equal([
             { code: 'minLength', path: 'root.a[0]', actual: '0', expected: 15 },
             {
-                code: 'pattern_i',
+                code: 'pattern',
                 path: 'root.a[0]',
                 actual: '0',
                 expected: '[a-z]+@gmail.com'
             },
             {
-                code: 'pattern_i',
+                code: 'pattern',
                 path: 'root.a[1]',
                 actual: 'amitguptagmail.com',
                 expected: '[a-z]+@gmail.com'

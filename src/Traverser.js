@@ -209,7 +209,7 @@ class Traverser{
                 if(rule.length > 8) modifier = rule.substring(8);
                 const expected = rules[rule];
                 if( !validations.string["pattern"](expected, actual, modifier) ){
-                    this.setInvalidValueError(rule, newpath, actual, expected);
+                    this.setInvalidValueError("pattern", newpath, actual, expected);
                 };
             }
         })

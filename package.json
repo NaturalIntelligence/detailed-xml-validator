@@ -1,6 +1,6 @@
 {
   "name": "detailed-xml-validator",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Validate for XML schema and returns all the possible failures",
   "main": "./src/validator.js",
   "scripts": {
