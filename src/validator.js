@@ -17,8 +17,12 @@ class Validator{
             allowBooleanAttributes: true
         });
         this.options = Object.assign({}, defaultOptions, options); 
+        this.validators={};
     }
 
+    register(validator, fn){
+        this.validators[validator] = fn;
+    }
     validate(xmldata){
         validateXMlData(xmldata);
         const xmlObj = parser.parse(xmldata, {
@@ -28,7 +32,7 @@ class Validator{
             parseNodeValue: false
         });
         this.data = xmlObj;
-        const traverser = new Traverser(this.options);
+        const traverser = new Traverser(this.options,this.validators);
         traverser.traverse (xmlObj, "", this.rules, "");
         return traverser.failures;
     }

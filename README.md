@@ -24,11 +24,12 @@ Sample Rules file
         </contact>
         <gender nillable="false" ></gender>
         <marks>
-            <subject repeatable minOccurs="5" maxOccurs="6" >
+            <subject repeatable minOccurs="5" maxOccurs="6" checkBy="subjectValidator">
                 <name pattern="math|hindi|english|science|history"></name>
                 <score type="positiveDecimal"></score>
             </subject>
         </marks>
+
     </student>
 </students>
 ```
@@ -58,6 +59,7 @@ Sample Rules file
     * **pattern_i**: regex (case insensitive)
     * **pattern_m**: regex (multiline)
     * **pattern_im**: regex (case insencitive and multiline)
+* **checkBy**: Give the name of validator that you registered with validator. This validator will be called with an object of nested tags (or value if it is a leaf node) and path.
 
 Sample code 
 ```js
@@ -69,6 +71,11 @@ const options = {
 };
 
 const validator = new Validator(rules, options);
+
+validator.register("subjectValidator", (obj, path) => { //From v1.0.0
+    //return; //if no error
+    //return {} //return an error msg object
+})
 const failures = validator.validate(xmlStringData);
 const originalXmlJsObj = validator.data;
 console.log(`Found ${failures.length} issues`);

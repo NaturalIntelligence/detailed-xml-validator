@@ -6,9 +6,10 @@ const { breakInSets} = require("./util");
 const numericTypes = ["positiveInteger", "integer", "positiveDecimal", "decimal", "number"];
 
 class Traverser{
-    constructor(options){
+    constructor(options, validators){
         this.options = options;
         this.failures = [];
+        this.validators=validators;
     }
 
     /**
@@ -46,6 +47,16 @@ class Traverser{
             } else if (this.isMapType(rules)) {
                 this.validateMandatoryFields(rules, path);
             }
+            this.applyCustomValidators(ele, rules, path);
+        }
+    }
+
+    applyCustomValidators(ele, rules, path){
+        if(rules['@rules'] && rules['@rules'].checkBy && typeof this.validators[rules['@rules'].checkBy] === "function"){
+            let res = this.validators[rules['@rules'].checkBy](ele, path.substr(1));
+            if(typeof res === "object"){
+                this.failures.push(res);
+            }
         }
     }
 
@@ -57,6 +68,7 @@ class Traverser{
         this.checkUnknownSiblings(sets, path);
         this.checkMissingSiblings(sets, rules, path);
 
+        this.applyCustomValidators(ele, rules, path);
         sets.common.forEach(key => {
             const newpath = path + "." + key;
             this.traverse(ele[key], key, rules[key], newpath);
