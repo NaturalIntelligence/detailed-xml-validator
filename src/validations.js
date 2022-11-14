@@ -11,6 +11,12 @@ module.exports.string = {
     pattern: function(expected, actual, modifier){
         const regxp = new RegExp(expected,  modifier);
         return regxp.test(actual);
+    },
+    fixed: function(expected, actual){
+        return expected === actual;
+    },
+    in: function(expected, actual){
+        return expected.split(",").indexOf(actual) > -1
     }
 }
 module.exports.num = {
@@ -22,7 +28,6 @@ module.exports.num = {
     }
 }
 module.exports.list = {
-
     minOccurs: function(expected, actual){
         return actual >= expected;
     },

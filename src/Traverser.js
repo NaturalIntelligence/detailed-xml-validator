@@ -209,6 +209,14 @@ class Traverser{
                 };
             }
         });
+        ["fixed","in"].forEach( rule => {
+            if(rules[rule] !== undefined){
+                const expected = rules[rule];
+                if( !validations.string[rule](expected, actual) ){
+                    this.setInvalidValueError(rule, newpath, actual, expected);
+                };
+            }
+        });
         // if(rules.pattern){
         //     const expected = rules[rule];
         //         if( !validations.string[rule](expected, actual) ){

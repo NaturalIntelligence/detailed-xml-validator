@@ -26,6 +26,7 @@ Sample Rules file
         <marks>
             <subject repeatable minOccurs="5" maxOccurs="6" checkBy="subjectValidator">
                 <name pattern="math|hindi|english|science|history"></name>
+                <!-- <name in="math,hindi,english,science,history"></name> -->
                 <score type="positiveDecimal"></score>
             </subject>
         </marks>
@@ -55,11 +56,14 @@ Sample Rules file
     * **minLength**:
     * **maxLength**:
     * **length**:
-    * **pattern**: regex
+    * **in**: comma separated string for exact match (from v1.0.0)
+    * **fixed**: exact match (from v1.0.0)
+    * **pattern**: regex match
     * **pattern_i**: regex (case insensitive)
     * **pattern_m**: regex (multiline)
     * **pattern_im**: regex (case insencitive and multiline)
-* **checkBy**: Give the name of validator that you registered with validator. This validator will be called with an object of nested tags (or value if it is a leaf node) and path.
+* **checkBy**: (from v1.0.0) Give the name of validator that you registered with validator. This validator will be called with an object of nested tags (or value if it is a leaf node) and path.
+
 
 Sample code 
 ```js
