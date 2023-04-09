@@ -1,6 +1,6 @@
 {
   "name": "detailed-xml-validator",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Validate for XML schema and returns all the possible failures",
   "main": "./src/validator.js",
   "scripts": {
@@ -20,11 +20,11 @@
   "author": "Amit Gupta (https://amitkumargupta.work/)",
   "license": "MIT",
   "dependencies": {
-    "fast-xml-parser": "^3.20.0"
+    "fast-xml-parser": "^4.2.0"
   },
   "devDependencies": {
+    "chai": "^4.3.4",
     "mocha": "^9.1.1",
-    "nyc": "^15.1.0",
-    "chai": "^4.3.4"
+    "nyc": "^15.1.0"
   }
 }

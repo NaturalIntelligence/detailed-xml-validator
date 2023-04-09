@@ -1,6 +1,6 @@
 /// @ts-check
 
-const parser = require("fast-xml-parser");
+const {XMLParser, XMLValidator} = require("fast-xml-parser");
 const Traverser = require("./Traverser");
 
 const defaultOptions = {
@@ -10,12 +10,13 @@ const defaultOptions = {
 class Validator{
     constructor(rules, options){
         validateXMlData(rules);
-        this.rules = parser.parse(rules, {
+        const ruleParser = new XMLParser({
             ignoreAttributes: false,
-            attrNodeName: "@rules",
+            attributesGroupName: "@rules",
             attributeNamePrefix: "",
             allowBooleanAttributes: true
         });
+        this.rules = ruleParser.parse(rules);
         this.options = Object.assign({}, defaultOptions, options); 
         this.validators={};
     }
@@ -25,12 +26,13 @@ class Validator{
     }
     validate(xmldata){
         validateXMlData(xmldata);
-        const xmlObj = parser.parse(xmldata, {
+        const parser = new XMLParser({
             ignoreAttributes: false,
-            attrNodeName: ":a",
+            attributesGroupName: ":a",
             attributeNamePrefix: "",
-            parseNodeValue: false
+            parseTagValue: false
         });
+        const xmlObj = parser.parse(xmldata);
         this.data = xmlObj;
         const traverser = new Traverser(this.options,this.validators);
         traverser.traverse (xmlObj, "", this.rules, "");
@@ -45,7 +47,7 @@ function validateXMlData(xmldata){
     if(!xmldata) throw new Error("Empty data")
     else if(typeof xmldata !== "string") throw new Error("Not a valid string")
     let xmlObj;
-    let result = parser.validate(xmldata, {
+    let result = XMLValidator.validate(xmldata, {
         allowBooleanAttributes: true
     });
     if(result !== true){
