@@ -1,7 +1,7 @@
-const { assert, expect } = require('chai');
-const Validator = require("../src/validator");
-const fs = require("fs");
-const path = require("path");
+import { assert, expect } from 'chai';
+import Validator from '../src/validator.js';
+import fs from 'fs';
+import path from 'path';
 
 describe("XML validator with Number", function() {
     //type:string

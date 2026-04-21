@@ -1,7 +1,9 @@
-const { assert, expect } = require('chai');
-const Validator = require("../src/validator");
-const fs = require("fs");
-const path = require("path");
+import { assert, expect } from 'chai';
+import Validator from '../src/validator.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe("XML validator with custom message", function() {
 

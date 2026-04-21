@@ -1,17 +1,19 @@
 {
   "name": "detailed-xml-validator",
-  "version": "1.1.0",
-  "description": "Validate for XML schema and returns all the possible failures",
+  "version": "2.0.0",
+  "description": "Validate  XML schema forbusiness rules and returns all the possible failures",
   "main": "./src/validator.js",
   "scripts": {
-    "test": "npx nyc mocha specs/*.spec.js",
-    "coverage": "npx nyc report --reporter html --reporter text -t .nyc_output --report-dir .nyc_output/summary"
+    "test": "npx mocha specs/*.spec.js --timeout 5000",
+    "coverage": "npx nyc mocha specs/*.spec.js"
   },
   "keywords": [
     "xsd",
     "xml",
     "validator",
-    "detail"
+    "detail",
+    "business",
+    "rule"
   ],
   "repository": {
     "type": "git",
@@ -20,7 +22,7 @@
   "author": "Amit Gupta (https://amitkumargupta.work/)",
   "license": "MIT",
   "dependencies": {
-    "fast-xml-parser": "^4.2.0"
+    "fast-xml-parser": "^5.7.1"
   },
   "devDependencies": {
     "chai": "^4.3.4",

@@ -1,5 +1,5 @@
-const { assert, expect } = require('chai');
-const Validator = require("../src/validator");
+import { assert, expect } from 'chai';
+import Validator from '../src/validator.js';
 
 describe("XML validator with checkBy", function() {
     it("custom validator should be called", function(){

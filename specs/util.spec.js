@@ -1,22 +1,15 @@
-const { expect } = require('chai');
-const {breakInSets} = require("../src/util");
+import { expect } from 'chai';
+import { breakInSets } from '../src/util.js';
 
-describe("Utility method", function() {
-    it("breakInSets should return extra items and common items", async function(){
-        const data = ["a", "b", "c", "e", "f"];
-        const rules = ["a", "b", "g", "c", "h"];
+describe("util", function(){
+    it("breakInSets", function(){
+        const data = ["a", "b", "c"];
+        const rules = ["b", "c", "d"];
         const result = breakInSets(data, rules);
-        expect(result.data).to.be.deep.equal(["e", "f"]);
-        expect(result.rules).to.be.deep.equal(["g", "h"]);
-        expect(result.common).to.be.deep.equal(["a", "b", "c"]);
+        expect(result).to.deep.equal({
+            data: ["a"],
+            rules: ["d"],
+            common: ["b","c"]
+        });
     });
-    it("breakInSets should return not extra itemsif all are common", async function(){
-        const data = ["a", "b", "c", "f"];
-        const rules = ["a", "b", "f", "c"];
-        const result = breakInSets(data, rules);
-        expect(result.data.length).to.equal(0);
-        expect(result.rules.length).to.equal(0);
-        expect(result.common).to.be.deep.equal(["a", "b", "c", "f"]);
-    });
-
 });

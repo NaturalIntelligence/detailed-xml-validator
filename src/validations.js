@@ -1,38 +1,59 @@
-module.exports.string = {
-    minLength : function(expected, actual){
+export const string = {
+    minLength(expected, actual) {
         return actual.length >= expected;
     },
-    maxLength : function(expected, actual){
+    maxLength(expected, actual) {
         return actual.length <= expected;
     },
-    length : function(expected, actual){
+    length(expected, actual) {
         return actual.length === expected;
     },
-    pattern: function(expected, actual, modifier){
-        const regxp = new RegExp(expected,  modifier);
+    pattern(expected, actual, modifier = "") {
+        const regxp = new RegExp(expected, modifier);
         return regxp.test(actual);
     },
-    fixed: function(expected, actual){
+    fixed(expected, actual) {
         return expected === actual;
     },
-    in: function(expected, actual){
-        return expected.split(",").indexOf(actual) > -1
-    }
-}
-module.exports.num = {
-    min: function(expected, actual){
+    in(expected, actual) {
+        return expected.split(",").indexOf(actual) > -1;
+    },
+};
+
+export const num = {
+    min(expected, actual) {
         return Number(actual) >= expected;
     },
-    max: function(expected, actual){
+    max(expected, actual) {
         return Number(actual) <= expected;
-    }
-}
-module.exports.list = {
-    minOccurs: function(expected, actual){
+    },
+};
+
+export const list = {
+    minOccurs(expected, actual) {
         return actual >= expected;
     },
-    maxOccurs: function(expected, actual){
+    maxOccurs(expected, actual) {
         return actual <= expected;
-    }
-}
+    },
+};
 
+export const date = {
+    /**
+     * Compare two date strings.
+     * @param {string} a
+     * @param {string} b
+     * @returns {number}
+     */
+    compare(a, b) {
+        return Date.parse(a) - Date.parse(b);
+    },
+
+    isBefore(actual, reference) {
+        return Date.parse(actual) < Date.parse(reference);
+    },
+
+    isAfter(actual, reference) {
+        return Date.parse(actual) > Date.parse(reference);
+    },
+};

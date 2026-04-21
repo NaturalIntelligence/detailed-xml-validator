@@ -1,7 +1,10 @@
-const { assert } = require('chai');
-const Validator = require("../src/validator");
-const fs = require("fs");
-const path = require("path");
+import { assert } from 'chai';
+import Validator from '../src/validator.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe("XML validator should throw error when ", function() {
     const xmlData = fs.readFileSync( path.join( __dirname, "./files/student.xml") );
@@ -9,8 +12,6 @@ describe("XML validator should throw error when ", function() {
     const errData = fs.readFileSync( path.join( __dirname,"./files/syntaxerror.xml")).toString();
     const studentRules = fs.readFileSync( path.join( __dirname,"./files/student_rules.xml"));
     const studentRulesStr = studentRules.toString();
-
-    
 
     it("No XML data", async function(){
         assert.throws(() => {
