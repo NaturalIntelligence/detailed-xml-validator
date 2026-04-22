@@ -56,4 +56,12 @@ export const date = {
     isAfter(actual, reference) {
         return Date.parse(actual) > Date.parse(reference);
     },
+
+    min(expected, actual) {
+        return Date.parse(actual) >= Date.parse(expected);
+    },
+
+    max(expected, actual) {
+        return Date.parse(actual) <= Date.parse(expected);
+    },
 };

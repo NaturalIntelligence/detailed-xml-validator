@@ -36,3 +36,18 @@ export function parseRange(range) {
     if (isNaN(min) || isNaN(max)) return null;
     return { min, max };
 }
+
+/**
+ * Parse a date range shorthand "minDate..maxDate" string into { min, max } date strings.
+ * Returns null if either part is not a parseable date.
+ * @param {string} range
+ * @returns {{ min: string, max: string } | null}
+ */
+export function parseDateRange(range) {
+    if (typeof range !== "string") return null;
+    const parts = range.split("..");
+    if (parts.length !== 2) return null;
+    const [min, max] = parts;
+    if (isNaN(Date.parse(min)) || isNaN(Date.parse(max))) return null;
+    return { min, max };
+}

@@ -45,6 +45,14 @@ export interface RangeFailure {
     expected: number;
 }
 
+/** Produced when a `min`, `max`, or `range` bound is violated on a `type="date"` field. */
+export interface DateBoundsFailure {
+    code: "min" | "max";
+    path: string;
+    actual: string;
+    expected: string;
+}
+
 export interface OccurrenceFailure {
     code: "minOccurs" | "maxOccurs";
     path: string;
@@ -82,13 +90,27 @@ export interface InFailure {
 
 /** Produced when a `before` or `after` ordering constraint is violated. */
 export interface OrderingFailure {
-    /** `"after"` when the field value is not strictly after the referenced field.
-     *  `"before"` when the field value is not strictly before the referenced field. */
+    /** `"after"` when the field does not appear after the referenced sibling in the XML.
+     *  `"before"` when the field does not appear before the referenced sibling in the XML. */
     code: "after" | "before";
     path: string;
-    /** The actual date string of this field. */
+    /** The tag name of the field that violated the constraint. */
     actual: string;
-    /** The *name* of the reference field (e.g. `"startDate"`). */
+    /** The tag name of the reference sibling (e.g. `"startDate"`). */
+    expected: string;
+}
+
+/**
+ * Produced when a cross-field relational constraint is violated.
+ * Constraint attributes: `sameAs`, `notSameAs`, `lessThan`, `moreThan`.
+ * Comparison is type-aware: dates use Date.parse(), numeric types use Number(), others are lexicographic.
+ */
+export interface RelationalFailure {
+    code: "sameAs" | "notSameAs" | "lessThan" | "moreThan";
+    path: string;
+    /** The actual string value of this field. */
+    actual: string;
+    /** The name of the reference sibling field (e.g. `"originalPrice"`). */
     expected: string;
 }
 
@@ -106,12 +128,14 @@ export type ValidationFailure =
     | UnexpectedValueInMapFailure
     | TypeFailure
     | RangeFailure
+    | DateBoundsFailure
     | OccurrenceFailure
     | StringFailure
     | PatternFailure
     | FixedFailure
     | InFailure
     | OrderingFailure
+    | RelationalFailure
     | UniqueFailure
     | Record<string, unknown>; // custom validator results
 

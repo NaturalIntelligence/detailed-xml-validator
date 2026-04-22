@@ -12,7 +12,9 @@ Unlike XSD validators, this module uses an intuitive XML-based rule format that 
 - ✅ **Flexible constraints** — Required fields, repeatable elements, occurrence limits
 - ✅ **Custom validators** — Register your own validation functions
 - ✅ **Type safety** — Built-in types: integers, decimals, dates, booleans, maps
-- ✅ **Ordering constraints** — Enforce `before`/`after` relationships between date fields
+- ✅ **Ordering constraints** — Enforce `before`/`after` positional ordering between sibling tags
+- ✅ **Date bounds** — `min`, `max`, and `range` on `type="date"` fields
+- ✅ **Relational constraints** — `sameAs`, `notSameAs`, `lessThan`, `moreThan` across sibling fields
 - ✅ **Uniqueness constraints** — `unique="true"` (sibling scope) and `unique="global"` (document scope)
 - ✅ **Range shorthand** — `range="min..max"` as readable sugar for `min` + `max`
 - ✅ **TypeScript types** — Bundled `.d.ts` declarations
@@ -159,33 +161,116 @@ Pattern modifiers: `pattern` (default), `pattern_i` (case-insensitive), `pattern
 
 ## Ordering Constraints (`before` / `after`)
 
-Enforce chronological ordering between sibling `type="date"` fields. Both attributes reference the **name** of a sibling element.
+Enforce **positional ordering** between sibling tags in the XML document. Both attributes reference the **name** of a sibling element. This is a structural check — it validates tag order, not field values. Works on any tag type, not just dates.
 
 ```xml
 <event>
-    <startDate type="date"></startDate>
-    <!-- endDate must be strictly after startDate -->
-    <endDate type="date" after="startDate"></endDate>
+    <title></title>
+    <!-- startDate must appear after title in the XML -->
+    <startDate after="title"></startDate>
+    <!-- endDate must appear after startDate -->
+    <endDate after="startDate"></endDate>
 </event>
 
 <order>
-    <orderDate type="date"></orderDate>
-    <shipDate type="date" after="orderDate"></shipDate>
-    <!-- deliveryDate must be after shipDate AND before expiryDate -->
-    <deliveryDate type="date" after="shipDate" before="expiryDate"></deliveryDate>
-    <expiryDate type="date"></expiryDate>
+    <orderDate></orderDate>
+    <!-- shipDate must come after orderDate AND before deliveryDate -->
+    <shipDate after="orderDate" before="deliveryDate"></shipDate>
+    <deliveryDate></deliveryDate>
 </order>
 ```
 
 **Failure shape:**
 
 ```js
-{ code: "after",  path: "order.deliveryDate", actual: "2024-01-10", expected: "shipDate" }
-{ code: "before", path: "order.deliveryDate", actual: "2025-01-10", expected: "expiryDate" }
+{ code: "after",  path: "order.shipDate", actual: "shipDate", expected: "orderDate" }
+{ code: "before", path: "order.shipDate", actual: "shipDate", expected: "deliveryDate" }
 ```
 
-- Ordering is **strict** (equal dates fail).
-- The check is skipped silently when the reference field is absent or contains an invalid date value.
+- The check is skipped silently when the referenced sibling is absent from the data.
+- To enforce that a reference field must be present, mark it `nillable="false"`.
+
+## Date Bounds (`min` / `max` / `range` on dates)
+
+Constrain `type="date"` fields to a specific date range. Accepts ISO 8601 date strings.
+
+```xml
+<!-- Explicit min/max -->
+<birthDate type="date" min="1900-01-01" max="2010-12-31"></birthDate>
+
+<!-- Range shorthand — equivalent to the above -->
+<eventDate type="date" range="2024-01-01..2024-12-31"></eventDate>
+
+<!-- Only a lower bound -->
+<startDate type="date" min="2020-01-01"></startDate>
+```
+
+`range="min..max"` works the same as for numeric fields. Explicit `min`/`max` take precedence over `range` when all three are set. Bounds are **inclusive**.
+
+**Failure shape:**
+
+```js
+{ code: "min", path: "event.startDate", actual: "2019-06-01", expected: "2020-01-01" }
+{ code: "max", path: "event.birthDate", actual: "2025-01-01", expected: "2010-12-31" }
+```
+
+The bounds check is skipped when the date value is itself invalid (a type error is reported instead).
+
+## Relational Constraints (`sameAs` / `notSameAs` / `lessThan` / `moreThan`)
+
+Compare a field's **value** against another sibling field's value. All four attributes take the **name** of a sibling element as their value.
+
+```xml
+<order>
+    <originalPrice type="number"></originalPrice>
+    <!-- discountedPrice must be strictly less than originalPrice -->
+    <discountedPrice type="number" lessThan="originalPrice"></discountedPrice>
+    <!-- tax must be strictly less than discountedPrice -->
+    <tax type="number" lessThan="discountedPrice"></tax>
+</order>
+
+<event>
+    <!-- startDate value must be before endDate value -->
+    <startDate type="date" lessThan="endDate"></startDate>
+    <endDate type="date"></endDate>
+</event>
+
+<form>
+    <password></password>
+    <!-- confirmPassword must equal password -->
+    <confirmPassword sameAs="password"></confirmPassword>
+</form>
+
+<user>
+    <username></username>
+    <!-- password must not equal username -->
+    <password notSameAs="username"></password>
+</user>
+```
+
+| Attribute | Passes when |
+|---|---|
+| `lessThan="ref"` | this value < ref value (strictly) |
+| `moreThan="ref"` | this value > ref value (strictly) |
+| `sameAs="ref"` | this value == ref value |
+| `notSameAs="ref"` | this value != ref value |
+
+**Comparison is type-aware** based on the field's declared `type`:
+- `type="date"` → `Date.parse()` comparison
+- numeric types (`integer`, `number`, etc.) → `Number()` comparison
+- `string` / no type → lexicographic comparison
+
+**Failure shape:**
+
+```js
+{ code: "lessThan", path: "order.discountedPrice", actual: "120", expected: "originalPrice" }
+{ code: "sameAs",   path: "form.confirmPassword",  actual: "wrong", expected: "password" }
+```
+
+**Skipped silently when:**
+- The referenced sibling is absent from the data (use `nillable="false"` on the ref field if you want that enforced separately)
+- Either value is a map/object rather than a primitive
+- The ref value cannot be coerced to the expected type
 
 ## Uniqueness Constraints (`unique`)
 
@@ -271,8 +356,9 @@ Return any object to push a failure, or nothing (/ `undefined` / `null`) to pass
         <firstname minLength="3" maxLength="10" nillable="false"></firstname>
         <email pattern="[a-z0-9]+@school\.org" nillable="false" unique="true"></email>
         <age type="positiveInteger" range="9..19"></age>
-        <enrolledOn type="date"></enrolledOn>
-        <graduatesOn type="date" after="enrolledOn"></graduatesOn>
+        <enrolledOn type="date" min="2000-01-01"></enrolledOn>
+        <!-- graduatesOn must appear after enrolledOn in XML, and its value must be later -->
+        <graduatesOn type="date" after="enrolledOn" moreThan="enrolledOn"></graduatesOn>
         <marks>
             <subject repeatable minOccurs="5" maxOccurs="6">
                 <name pattern="math|hindi|english|science|history"></name>
@@ -312,13 +398,17 @@ if (failures.length > 0) {
 | `unexpected sequence` | Array where scalar expected | — |
 | `unexpected value in a map` | Scalar where map expected | `value` |
 | `not a <type>` | Value fails type check | `value` |
-| `min` / `max` | Numeric out of range | `actual`, `expected` |
+| `min` / `max` | Numeric or date out of range | `actual`, `expected` |
 | `minOccurs` / `maxOccurs` | Occurrence count out of range | `actual`, `expected` |
 | `minLength` / `maxLength` / `length` | String length violation | `actual`, `expected` |
 | `pattern` | Regex mismatch | `actual`, `expected` |
 | `fixed` / `in` | Value not in allowed set | `actual`, `expected` |
-| `after` | Date not strictly after reference | `actual`, `expected` (field name) |
-| `before` | Date not strictly before reference | `actual`, `expected` (field name) |
+| `after` | Tag does not appear after referenced sibling in XML | `actual` (tag name), `expected` (ref tag name) |
+| `before` | Tag does not appear before referenced sibling in XML | `actual` (tag name), `expected` (ref tag name) |
+| `lessThan` | Field value is not strictly less than sibling value | `actual`, `expected` (ref field name) |
+| `moreThan` | Field value is not strictly greater than sibling value | `actual`, `expected` (ref field name) |
+| `sameAs` | Field value does not equal sibling value | `actual`, `expected` (ref field name) |
+| `notSameAs` | Field value equals sibling value (should differ) | `actual`, `expected` (ref field name) |
 | `unique` | Duplicate value violates uniqueness constraint | `value` |
 
 ## TypeScript
@@ -336,7 +426,7 @@ Type declarations are bundled at `src/index.d.ts`. Add to your `tsconfig.json`:
 Or import the types directly:
 
 ```ts
-import Validator, { ValidationFailure, OrderingFailure, UniqueFailure } from "detailed-xml-validator";
+import Validator, { ValidationFailure, OrderingFailure, RelationalFailure, DateBoundsFailure, UniqueFailure } from "detailed-xml-validator";
 ```
 
 ## API Reference

@@ -1,5 +1,5 @@
 import * as validations from "./validations.js";
-import { breakInSets, parseRange } from "./util.js";
+import { breakInSets, parseRange, parseDateRange } from "./util.js";
 
 const numericTypes = ["positiveInteger", "integer", "positiveDecimal", "decimal", "number"];
 
@@ -8,7 +8,7 @@ export class Traverser {
      * @param {object} options
      * @param {object} validators
      */
-    constructor(options, validators) {
+    constructor(options, validators, siblingOrder) {
         this.options = options;
         this.failures = [];
         this.validators = validators;
@@ -16,6 +16,10 @@ export class Traverser {
         // uniqueness tracking: field path -> array of seen values (sibling-scoped)
         // global uniqueness tracking: field name -> array of seen values (document-scoped)
         this._globalUnique = new Map(); // Map<fieldName, Set<string>>
+
+        // Side-channel sibling order map built during XML parsing.
+        // Map<parentPath, string[]> where parentPath matches Traverser's dot-notation path.
+        this._siblingOrder = siblingOrder || new Map();
     }
 
     /**
@@ -93,60 +97,183 @@ export class Traverser {
             this.traverse(ele[key], key, rules[key], newpath);
         });
 
-        // After traversing, run ordering & uniqueness checks for this sibling scope
+        // After traversing, run ordering, uniqueness, and relational checks for this sibling scope
         this._checkOrderingConstraints(ele, rules, sets.common, path);
         this._checkUniquenessConstraints(ele, rules, sets.common, path, siblingValues);
+        this._checkRelationalConstraints(ele, rules, sets.common, path);
     }
 
     // ─── Ordering Constraints (before / after) ────────────────────────────────
 
     /**
-     * For every date field that has `before` or `after` in rules, validate ordering.
+     * For every field that has `before` or `after` in its rules, validate that
+     * it appears positionally before or after the referenced sibling tag in the
+     * original XML document order.
+     *
+     * Order is sourced from the side-channel `_siblingOrder` map built during
+     * parsing — not from JS object key order, which is unreliable for integer keys.
+     *
+     * Works for any tag type, not just dates.
+     *
      * @param {object} ele
      * @param {object} rules
      * @param {string[]} commonKeys
-     * @param {string} path
+     * @param {string} path  - current traversal path (e.g. ".event" or ".order[0]")
      */
     _checkOrderingConstraints(ele, rules, commonKeys, path) {
+        // The siblingOrder map is keyed by the parent path without the leading dot.
+        const orderKey = path.substr(1);
+        const order = this._siblingOrder.get(orderKey);
+        // If we have no order info for this path, skip — can happen for empty elements.
+        if (!order) return;
+
         commonKeys.forEach((key) => {
             const fieldRules = rules[key];
             if (!fieldRules || !fieldRules["@rules"]) return;
             const r = fieldRules["@rules"];
-            if (r.type !== "date") return;
 
-            const actualVal = ele[key];
-            if (!actualVal || typeof actualVal !== "string") return;
+            const keyIdx = order.indexOf(key);
+            if (keyIdx === -1) return; // tag not recorded — skip
 
             if (r.after) {
                 const refKey = r.after;
-                const refVal = ele[refKey];
-                if (refVal && typeof refVal === "string" && !isNaN(Date.parse(refVal))) {
-                    if (!isNaN(Date.parse(actualVal)) && !validations.date.isAfter(actualVal, refVal)) {
-                        this.failures.push({
-                            code: "after",
-                            path: (path + "." + key).substr(1),
-                            actual: actualVal,
-                            expected: refKey,
-                        });
-                    }
+                // Skip silently if referenced sibling is absent from data
+                if (ele[refKey] === undefined) return;
+                const refIdx = order.indexOf(refKey);
+                if (refIdx === -1) return;
+                if (keyIdx <= refIdx) {
+                    this.failures.push({
+                        code: "after",
+                        path: (path + "." + key).substr(1),
+                        actual: key,
+                        expected: refKey,
+                    });
                 }
             }
 
             if (r.before) {
                 const refKey = r.before;
-                const refVal = ele[refKey];
-                if (refVal && typeof refVal === "string" && !isNaN(Date.parse(refVal))) {
-                    if (!isNaN(Date.parse(actualVal)) && !validations.date.isBefore(actualVal, refVal)) {
-                        this.failures.push({
-                            code: "before",
-                            path: (path + "." + key).substr(1),
-                            actual: actualVal,
-                            expected: refKey,
-                        });
-                    }
+                // Skip silently if referenced sibling is absent from data
+                if (ele[refKey] === undefined) return;
+                const refIdx = order.indexOf(refKey);
+                if (refIdx === -1) return;
+                if (keyIdx >= refIdx) {
+                    this.failures.push({
+                        code: "before",
+                        path: (path + "." + key).substr(1),
+                        actual: key,
+                        expected: refKey,
+                    });
                 }
             }
         });
+    }
+
+    // ─── Relational Constraints (sameAs / notSameAs / lessThan / moreThan) ──────
+
+    /**
+     * Compare this field's value against another sibling field's value.
+     *
+     * Supported rule attributes:
+     *   sameAs="refField"     — values must be equal
+     *   notSameAs="refField"  — values must differ
+     *   lessThan="refField"   — this value must be strictly less than ref value
+     *   moreThan="refField"   — this value must be strictly greater than ref value
+     *
+     * Comparison is type-aware based on the field's declared `type`:
+     *   date types   → Date.parse() comparison
+     *   numeric types → Number() comparison
+     *   all others    → lexicographic string comparison
+     *
+     * Skips silently when:
+     *   - The referenced sibling is absent from data
+     *   - Either value is an object/map (not a primitive)
+     *   - The ref value cannot be coerced to the expected type
+     *
+     * @param {object} ele
+     * @param {object} rules
+     * @param {string[]} commonKeys
+     * @param {string} path
+     */
+    _checkRelationalConstraints(ele, rules, commonKeys, path) {
+        const RELATIONAL_RULES = ["sameAs", "notSameAs", "lessThan", "moreThan"];
+
+        commonKeys.forEach((key) => {
+            const fieldRules = rules[key];
+            if (!fieldRules || !fieldRules["@rules"]) return;
+            const r = fieldRules["@rules"];
+
+            // Check if any relational rule is present
+            if (!RELATIONAL_RULES.some((attr) => r[attr] !== undefined)) return;
+
+            const actualRaw = ele[key];
+
+            // Skip maps and arrays — only primitives are comparable
+            if (actualRaw === null || actualRaw === undefined) return;
+            if (typeof actualRaw === "object") return;
+
+            const fieldType = r.type || "string";
+
+            RELATIONAL_RULES.forEach((attr) => {
+                if (r[attr] === undefined) return;
+
+                const refKey = r[attr];
+                const refRaw = ele[refKey];
+
+                // Skip silently if ref sibling is absent or is a map/array
+                if (refRaw === undefined || refRaw === null) return;
+                if (typeof refRaw === "object") return;
+
+                // Coerce both values and compare
+                const cmp = this._relationalCompare(String(actualRaw), String(refRaw), fieldType);
+
+                // cmp is null when coercion fails — skip silently
+                if (cmp === null) return;
+
+                let violated = false;
+                if (attr === "sameAs"    && cmp !== 0) violated = true;
+                if (attr === "notSameAs" && cmp === 0) violated = true;
+                if (attr === "lessThan"  && cmp >= 0)  violated = true;
+                if (attr === "moreThan"  && cmp <= 0)  violated = true;
+
+                if (violated) {
+                    this.failures.push({
+                        code: attr,
+                        path: (path + "." + key).substr(1),
+                        actual: String(actualRaw),
+                        expected: refKey,
+                    });
+                }
+            });
+        });
+    }
+
+    /**
+     * Compare two string-encoded values using the appropriate strategy for the field type.
+     * Returns a negative number, zero, or positive number (like Array.sort comparator).
+     * Returns null if coercion fails (caller should skip silently).
+     * @param {string} a
+     * @param {string} b
+     * @param {string} fieldType
+     * @returns {number|null}
+     */
+    _relationalCompare(a, b, fieldType) {
+        if (fieldType === "date") {
+            const da = Date.parse(a);
+            const db = Date.parse(b);
+            if (isNaN(da) || isNaN(db)) return null;
+            return da - db;
+        }
+        if (numericTypes.indexOf(fieldType) !== -1) {
+            const na = Number(a);
+            const nb = Number(b);
+            if (isNaN(na) || isNaN(nb)) return null;
+            return na - nb;
+        }
+        // string / no type — lexicographic
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
     }
 
     // ─── Uniqueness Constraints ───────────────────────────────────────────────
@@ -280,6 +407,7 @@ export class Traverser {
             this.validateMandatoryFields(rules, path);
         } else if (eleType === "date") {
             this.validateDate(val, eleType, path);
+            this._checkDateBounds(rules, val, path);
         } else if (eleType === "boolean") {
             this.validateBoolean(val, eleType, path);
         } else if (numericTypes.indexOf(eleType) !== -1) {
@@ -313,6 +441,38 @@ export class Traverser {
                 max: rules["@rules"].max !== undefined ? rules["@rules"].max : String(parsed.max),
             },
         };
+    }
+
+    /**
+     * Check `min`, `max`, and `range` bounds for a date field.
+     * Only runs after the value has already passed `validateDate` (i.e. it is a valid date).
+     * Explicit `min`/`max` take precedence over `range` shorthand.
+     * @param {object} rules
+     * @param {string} val
+     * @param {string} path
+     */
+    _checkDateBounds(rules, val, path) {
+        if (isNaN(Date.parse(val))) return; // invalid date — type check already reported it
+        const r = rules["@rules"];
+
+        let min = r.min;
+        let max = r.max;
+
+        // Expand range shorthand only for the parts not already set explicitly
+        if (r.range && (!min || !max)) {
+            const parsed = parseDateRange(r.range);
+            if (parsed) {
+                if (!min) min = parsed.min;
+                if (!max) max = parsed.max;
+            }
+        }
+
+        if (min !== undefined && !validations.date.min(min, val)) {
+            this.setInvalidValueError("min", path, val, min);
+        }
+        if (max !== undefined && !validations.date.max(max, val)) {
+            this.setInvalidValueError("max", path, val, max);
+        }
     }
 
     /**

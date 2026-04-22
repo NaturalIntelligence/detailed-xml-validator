@@ -42,15 +42,33 @@ export class Validator {
      */
     validate(xmldata) {
         validateXMLData(xmldata);
+
+        // Side-channel: record the insertion order of child tags per parent path.
+        // Map<parentPath, string[]> — parentPath uses the same dot-notation as Traverser.
+        // tagValueProcessor fires for every tag in document order, giving us reliable
+        // positional information independent of JS object key ordering.
+        const siblingOrder = new Map();
+        const tagValueProcessor = (tagName, tagValue, jPath) => {
+            // jPath is "root.parent.child" — parent path is everything before the last segment
+            const lastDot = jPath.lastIndexOf(".");
+            const parentPath = lastDot === -1 ? "" : jPath.substring(0, lastDot);
+            if (!siblingOrder.has(parentPath)) siblingOrder.set(parentPath, []);
+            const siblings = siblingOrder.get(parentPath);
+            // Only push if not already recorded (FXP may fire multiple times for arrays)
+            if (siblings[siblings.length - 1] !== tagName) siblings.push(tagName);
+            return tagValue;
+        };
+
         const parser = new XMLParser({
             ignoreAttributes: false,
             attributesGroupName: ":a",
             attributeNamePrefix: "",
             parseTagValue: false,
+            tagValueProcessor,
         });
         const xmlObj = parser.parse(xmldata);
         this.data = xmlObj;
-        const traverser = new Traverser(this.options, this.validators);
+        const traverser = new Traverser(this.options, this.validators, siblingOrder);
         traverser.traverse(xmlObj, "", this.rules, "");
         return traverser.failures;
     }
