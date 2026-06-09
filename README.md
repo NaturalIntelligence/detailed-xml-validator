@@ -1,4 +1,7 @@
 # detailed-xml-validator
+[![detailed-xml-validator downloads](https://img.shields.io/npm/dw/detailed-xml-validator.svg)](https://npm-compare.com/detailed-xml-validator) 
+[![detailed-xml-validator version](https://img.shields.io/npm/v/detailed-xml-validator.svg)](https://www.npmjs.com/package/detailed-xml-validator)
+[![detailed-xml-validator license](https://img.shields.io/npm/l/detailed-xml-validator.svg)](https://github.com/NaturalIntelligence/detailed-xml-validator)
 
 A comprehensive XML validator that validates against custom rule schemas and reports **all** failures at once, not just the first error encountered.
 
