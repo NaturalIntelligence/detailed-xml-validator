@@ -1,5 +1,5 @@
 import * as validations from "./validations.js";
-import { breakInSets, parseRange, parseDateRange } from "./util.js";
+import { breakInSets, parseRange, parseDateRange, toNumber } from "./util.js";
 
 const numericTypes = ["positiveInteger", "integer", "positiveDecimal", "decimal", "number"];
 
@@ -265,8 +265,8 @@ export class Traverser {
             return da - db;
         }
         if (numericTypes.indexOf(fieldType) !== -1) {
-            const na = Number(a);
-            const nb = Number(b);
+            const na = toNumber(a);
+            const nb = toNumber(b);
             if (isNaN(na) || isNaN(nb)) return null;
             return na - nb;
         }
@@ -414,7 +414,7 @@ export class Traverser {
             if (!this.isValidNum(eleType, val)) {
                 this.setInvalidDataType(eleType, path, val);
             } else {
-                this.assertValue(expandedRules["@rules"], "num", Number(val), path);
+                this.assertValue(expandedRules["@rules"], "num", toNumber(val), path);
             }
         } else if (eleType === "string" || !eleType) {
             this.assertValue(expandedRules["@rules"], "string", val, path);
@@ -589,12 +589,12 @@ export class Traverser {
     }
 
     isValidNum(eleType, val) {
-        if (!isNaN(val)) {
-            const num = Number(val);
+        const num = toNumber(val);
+        if (!isNaN(num)) {
             if (
                 (eleType === "positiveInteger" && num < 0) ||
                 (eleType === "positiveDecimal" && num < 0) ||
-                (eleType === "integer" && !isInt(val))
+                (eleType === "integer" && !isInt(num))
             ) {
                 return false;
             }
@@ -705,7 +705,6 @@ Traverser.prototype._runSiblingUniqueness = function (items, rules, path) {
     });
 };
 
-function isInt(value) {
-    const x = parseFloat(value);
-    return (x | 0) === x;
+function isInt(num) {
+    return (num | 0) === num;
 }

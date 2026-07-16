@@ -1,6 +1,7 @@
 {
   "name": "detailed-xml-validator",
-  "version": "2.0.0",
+  "version": "2.1.0",
+  "type": "module",
   "description": "Validate  XML schema forbusiness rules and returns all the possible failures",
   "main": "./src/validator.js",
   "scripts": {
@@ -13,7 +14,8 @@
     "validator",
     "detail",
     "business",
-    "rule"
+    "rule",
+    "locales"
   ],
   "repository": {
     "type": "git",
@@ -22,7 +24,9 @@
   "author": "Amit Gupta (https://amitkumargupta.work/)",
   "license": "MIT",
   "dependencies": {
-    "fast-xml-parser": "^5.7.1"
+    "@nodable/flexible-xml-parser": "^1.11.2",
+    "@nodable/compact-builder": "^2.0.0",
+    "@nodable/base-output-builder": "^2.0.0"
   },
   "devDependencies": {
     "chai": "^4.3.4",

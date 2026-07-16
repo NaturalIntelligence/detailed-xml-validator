@@ -27,13 +27,13 @@ export interface UnexpectedValueInMapFailure {
 
 export interface TypeFailure {
     code:
-        | "not a date"
-        | "not a boolean"
-        | "not a integer"
-        | "not a positiveInteger"
-        | "not a decimal"
-        | "not a positiveDecimal"
-        | "not a number";
+    | "not a date"
+    | "not a boolean"
+    | "not a integer"
+    | "not a positiveInteger"
+    | "not a decimal"
+    | "not a positiveDecimal"
+    | "not a number";
     path: string;
     value: string;
 }
@@ -173,6 +173,7 @@ export type CustomValidatorFn = (
 // ─── Validator class ──────────────────────────────────────────────────────────
 
 export declare class Validator {
+
     /**
      * The parsed XML data from the most recent `validate()` call.
      * `null` before the first call.

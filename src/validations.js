@@ -1,3 +1,5 @@
+import { toNumber } from "./util.js";
+
 export const string = {
     minLength(expected, actual) {
         return actual.length >= expected;
@@ -22,10 +24,10 @@ export const string = {
 
 export const num = {
     min(expected, actual) {
-        return Number(actual) >= expected;
+        return toNumber(actual) >= expected;
     },
     max(expected, actual) {
-        return Number(actual) <= expected;
+        return toNumber(actual) <= expected;
     },
 };
 
