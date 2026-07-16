@@ -1,6 +1,6 @@
 {
   "name": "detailed-xml-validator",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "module",
   "description": "Validate  XML schema forbusiness rules and returns all the possible failures",
   "main": "./src/validator.js",
